@@ -194,12 +194,58 @@ class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 		{
 			return true;
 		}
-		return false;
+		int id = LangUtil.get(view, "getId", null, null);
+		int idByName = 0;
+		return id == 20;
 	}
 
-	public void bind(Object view, String stimulation,IStimulationInvokeListener callback) {
+	public void bind(Object view, final String stimulation,IStimulationInvokeListener callback) {
 		String key = createKey(view, stimulation);
 		stimulationListeners.put(key, callback);
+		int index = stimulation.lastIndexOf('#');
+		String rawFilter = null;
+		String s1 = stimulation;
+		if(index > 0)
+		{
+			rawFilter = s1.substring(index + 1);
+			s1 = s1.substring(0, index);
+		}
+		final String methodFilter = rawFilter;
+		index = s1.lastIndexOf('$');
+		if(index < 0)
+		{
+			index = s1.lastIndexOf('.');
+		}
+		String clazzName = null;
+		String setterName = null;
+		if(index > 0)
+		{
+			setterName = s1.substring(index + 1);
+			clazzName = s1;
+		}
+		else
+		{
+			setterName = StringUtil.firtUpper(s1);
+		}
+		IInvokeListener invokeListener = new IInvokeListener() {
+			
+			public void onInvoked(Object source, Class<?> interfaceClazz,
+					String method, Object[] args) {
+				if(methodFilter != null && !methodFilter.equals(method))
+				{
+					return;
+				}
+				stimulate(source, stimulation, args);
+			}
+		};
+		if(clazzName != null)
+		{
+			boolean result = LangUtil.observeInterfaceInvoke(view, "set" + setterName, clazzName, invokeListener);
+			if(!result)
+			{
+				result = LangUtil.observeInterfaceInvoke(view, "add" + setterName, clazzName, invokeListener);
+			}
+		}
 	}
 
 	public void unBind(Object view) {
