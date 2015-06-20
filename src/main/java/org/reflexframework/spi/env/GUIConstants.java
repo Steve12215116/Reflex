@@ -1,4 +1,4 @@
-package org.reflexframework.env;
+package org.reflexframework.spi.env;
 
 public class GUIConstants {
 	

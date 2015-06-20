@@ -1,7 +1,11 @@
 package org.reflexframework.receptor.annotation;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.sun.javafx.sg.prism.NodeEffectInput.RenderType;
 
 /**
  * 感受器的感受入口，在方法级别监听来自视图的输入。一般视图的动作的输出，有两种办法：
@@ -21,12 +25,13 @@ import java.lang.annotation.Target;
  */
 
 @Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Recept {
 	/**
 	 * 通过名字来定义感受目标，可以为空。如果为空，则所有目标的对应输入都会被捕获
 	 * @return
 	 */
-	String target();
+	String target() default "";
 	
 	/**
 	 * 刺激定义。格式:[类全路径.]名称[#方法名]<br/>

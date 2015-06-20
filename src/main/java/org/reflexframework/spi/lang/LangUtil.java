@@ -1,5 +1,6 @@
-package org.reflexframework.lang;
+package org.reflexframework.spi.lang;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
@@ -45,18 +46,19 @@ public class LangUtil {
 	 * @param value
 	 * @return
 	 */
-	public static boolean invokeMethod(Object target, String methodName, Class<?> paramClazz, Object value)
+	public static InvokeResult invokeMethod(Object target, String methodName, Class<?>[] paramClazzs, Object... paramValues)
 	{
 		try {
-			Method method = target.getClass().getMethod(methodName, paramClazz);
+			Method method = target.getClass().getMethod(methodName, paramClazzs);
 			boolean oldAccess = method.isAccessible();
 			method.setAccessible(true);
-			method.invoke(target, value);
+			Object result = method.invoke(target, paramValues);
 			method.setAccessible(oldAccess);
+			return new InvokeResult(result);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return false;
+		return new InvokeResult(false);
 	}
 	
 	/**
@@ -76,4 +78,32 @@ public class LangUtil {
 		}
 		return clazz.isAssignableFrom(object.getClass());
 	}
+	
+	/**
+	 * 调用指定对象上的getter方法，获取返回对象
+	 * @return
+	 */
+	public  static  <T> T get(Object object, String getMethod, Class<?>[] paramClazzs, Object... paramValues)
+	{
+		InvokeResult result = invokeMethod(object, getMethod, paramClazzs, paramValues);
+		if(!result.isSuccessful())
+		{
+			return null;
+		}
+		return (T)result.getResult();
+	}
+	
+	public static void setField(Object object,  Field field, Object value)
+	{
+		boolean oldAcs = field.isAccessible();
+		field.setAccessible(true);
+		try {
+			field.set(object, value);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		field.setAccessible(oldAcs);
+	}
+	
 }

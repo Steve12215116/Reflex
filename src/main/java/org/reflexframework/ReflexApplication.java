@@ -1,6 +1,6 @@
 package org.reflexframework;
 
-import org.reflexframework.env.GUIConstants;
+import org.reflexframework.spi.env.GUIConstants;
 
 /**
  * 启动Reflex应用。启动顺序是这样的：

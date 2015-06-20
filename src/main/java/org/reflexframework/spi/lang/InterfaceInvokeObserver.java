@@ -1,4 +1,4 @@
-package org.reflexframework.lang;
+package org.reflexframework.spi.lang;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -32,7 +32,7 @@ class InterfaceInvokeObserver{
 		{
 			return false;
 		}
-		return LangUtil.invokeMethod(target, setMethod, interfaceClazz, Proxy.newProxyInstance(interfaceClazz.getClassLoader(), new Class<?>[]{interfaceClazz}, new   InvocationHandler()
+		InvokeResult result =  LangUtil.invokeMethod(target, setMethod, new Class<?>[]{interfaceClazz}, Proxy.newProxyInstance(interfaceClazz.getClassLoader(), new Class<?>[]{interfaceClazz}, new   InvocationHandler()
 		{
 			public Object invoke(Object proxy, Method method, Object[] args)throws Throwable {
 				if(listener != null)
@@ -43,6 +43,7 @@ class InterfaceInvokeObserver{
 			}
 			
 		}));
+		return result.isSuccessful();
 	}
 	
 	public void unObserver()
@@ -51,7 +52,7 @@ class InterfaceInvokeObserver{
 		{
 			return ;
 		}
-		LangUtil.invokeMethod(target, setMethod, interfaceClazz, null);
+		LangUtil.invokeMethod(target, setMethod, new Class<?>[]{interfaceClazz}, null);
 	}
 	
 
