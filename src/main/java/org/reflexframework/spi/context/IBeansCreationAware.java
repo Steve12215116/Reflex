@@ -1,5 +1,7 @@
 package org.reflexframework.spi.context;
 
+import java.lang.reflect.Method;
+
 /**
  * 框架内部用于创建和引用各组件的接口。
  * @author jiangjiang
@@ -7,7 +9,14 @@ package org.reflexframework.spi.context;
  */
 interface IBeansCreationAware {
 	
-	Object getReceptor(Class<?> clazz);
+	/**
+	 * 根据类查找对应的bean,如果没有，则创建。
+	 * @param clazz
+	 * @return
+	 */
+	Object getBean(Class<?> clazz);
 	
-	Object retreiveReceptor(Class<?> clazz);
+	Object retrieveBean(Class<?> clazz);
+	
+	EffectMethod retrieveEffectMethod(Method method);
 }

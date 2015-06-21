@@ -1,5 +1,6 @@
 package org.reflexframework;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -195,8 +196,8 @@ class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 			return true;
 		}
 		int id = LangUtil.get(view, "getId", null, null);
-		int idByName = 0;
-		return id == 20;
+		int idByName = getViewId(view, name);
+		return id == idByName;
 	}
 
 	public void bind(Object view, final String stimulation,IStimulationInvokeListener callback) {
@@ -253,8 +254,8 @@ class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 	}
 	
 	public void update(Object view, String site, Object value) {
-		// TODO Auto-generated method stub
-		
+		String setterName = "set" + StringUtil.firtUpper(site);	
+		LangUtil.invokeMethod(view, setterName, value);
 	}
 	
 	private String createKey(Object view, String stimulation)
@@ -309,5 +310,18 @@ class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 		
 	}
 
-	
+	private int getViewId(Object view, String idString)
+	{
+		Object context = LangUtil.get(view, "getContext", null);
+		context =LangUtil.get(context, "getApplicationContext", null);
+		String name = LangUtil.get(context, "getPackageName", null);
+		try {
+			Class clazz = view.getClass().getClassLoader().loadClass(name + ".R$id");
+			Field field = clazz.getDeclaredField(idString);
+			return field.getInt(null);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
 }

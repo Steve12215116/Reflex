@@ -35,7 +35,7 @@ public class ReceptMethod implements IStimulationInvokeListener{
 
 	public void onInvoked(Object source, String stimultion, Object[] args) {
 		Class<?> clazz = method.getDeclaringClass();
-		Object receptor = beansAware.getReceptor(clazz);
+		Object receptor = beansAware.getBean(clazz);
 		try {
 			boolean old = method.isAccessible();
 			method.setAccessible(true);

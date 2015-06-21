@@ -10,11 +10,13 @@ import java.util.Map;
 import org.reflexframework.Initializable;
 import org.reflexframework.center.annotation.Autowired;
 import org.reflexframework.center.annotation.Center;
+import org.reflexframework.effector.annotation.Effect;
 import org.reflexframework.effector.annotation.Effector;
 import org.reflexframework.receptor.annotation.Recept;
 import org.reflexframework.receptor.annotation.Receptor;
 import org.reflexframework.spi.lang.LangUtil;
 import org.reflexframework.spi.util.StringUtil;
+
 
 public class BeansContext implements IBeansContext, IBeansCreationAware {
 
@@ -24,10 +26,13 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	
 	private Map<String, Object> centers = new HashMap<String, Object>();
 	
+	
+	private Map<String, CenterProxy> proxies = new HashMap<String, CenterProxy>();
+	
 	/**
-	 * 所有的感受器实例
+	 * 所有的感受器、效应器实例
 	 */
-	private Map<Class<?>, Object> receptorInstances;
+	private Map<Class<?>, Object> beans;
 	
 	
 	/**
@@ -39,6 +44,14 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	 * 一个对象和一个刺激唯一决定了它的监听者。
 	 */
 	private Map<String, CompositeSameObjectStimulationInvokeListener> stimulationInvokeListeners;
+	
+	/**
+	 * 名字到效应方法的映射
+	 */
+	private Map<String, List<EffectMethod>> effectMethods;
+	
+	private Map<Integer, EffectMethod> methodToEffectMethods;
+	
 	
 	public void init(List<Class<?>> clazzes) {	
 		for(Class<?> clazz : clazzes)
@@ -99,7 +112,7 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	}	
 	
 	/**
-	 * 给指定对象注入业务中枢
+	 * 给指定对象注入业务中枢。注入的都是代理
 	 * @param instance
 	 */
 	private void autoWireObjectIntoCenters(Object instance)
@@ -117,7 +130,13 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 			{
 				continue;
 			}
-			LangUtil.setField(instance, field, centers.get(name));
+			CenterProxy proxy = proxies.get(name);
+			if(proxy == null)
+			{
+				proxy = new CenterProxy(this, centers.get(name));
+				proxies.put(name, proxy);
+			}
+			LangUtil.setField(instance, field, proxies.get(name).getProxy());
 		}
 	}
 	
@@ -174,16 +193,60 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	
 	private void connectEffector(Object view, IEffectBinder binder)
 	{
-		
+		if(effectMethods == null)
+		{
+			effectMethods = new HashMap<String, List<EffectMethod>>();
+			List<Class<?>> clazzes = this.getEffectorClazzes();
+			for(Class<?> clazz : clazzes)
+			{
+				Effector effector = clazz.getAnnotation(Effector.class);
+				String defaultName = effector.target();
+				
+				for(Method method : clazz.getDeclaredMethods())
+				{
+					if(!method.isAnnotationPresent(Effect.class))
+					{
+						continue;
+					}
+					Effect effect = method.getAnnotation(Effect.class);
+					String name = effect.target();
+					if(StringUtil.isEmpty(name))
+					{
+						name = defaultName;
+					}
+					if(!effectMethods.containsKey(name))
+					{
+						effectMethods.put(name, new ArrayList<EffectMethod>());
+					}
+					EffectMethod em = new EffectMethod(this, effect.site(), method);
+					effectMethods.get(name).add(em);
+					if(methodToEffectMethods == null)
+					{
+						methodToEffectMethods = new HashMap<Integer, EffectMethod>();
+					}
+					methodToEffectMethods.put(method.hashCode(), em);
+				}
+			}
+		}
+		for(String name : effectMethods.keySet())
+		{
+			if(binder.match(view, name)){
+				List<EffectMethod> methods = effectMethods.get(name);
+				for(EffectMethod method : methods)
+				{
+					method.update(binder, view);
+				}			
+			}
+		}
 	}
 	
 
-	public Object getReceptor(Class<?> clazz) {
-		if(receptorInstances == null)
+	public Object getBean(Class<?> clazz) {
+		if(beans == null)
 		{
-			receptorInstances = new HashMap<Class<?>, Object>();
+			beans = new HashMap<Class<?>, Object>();
 		}
-		if(!receptorInstances.containsKey(clazz))
+		if(!beans.containsKey(clazz))
 		{
 			Object value = null;
 			try {
@@ -193,17 +256,26 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 				return null;
 			}
 			autoWireObjectIntoCenters(value);
-			receptorInstances.put(clazz, value);
+			beans.put(clazz, value);
 		}
-		return receptorInstances.get(clazz);
+		return beans.get(clazz);
 	}
 
-	public Object retreiveReceptor(Class<?> clazz) {
-		if(receptorInstances == null)
+	public Object retrieveBean(Class<?> clazz) {
+		if(beans == null)
 		{
 			return null;
 		}
-		return receptorInstances.get(clazz);
+		return beans.get(clazz);
+	}
+	
+	public EffectMethod retrieveEffectMethod(Method method)
+	{
+		if(methodToEffectMethods == null)
+		{
+			return null;
+		}
+		return methodToEffectMethods.get(method.hashCode());
 	}
 	
 	

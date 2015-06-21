@@ -62,6 +62,89 @@ public class LangUtil {
 	}
 	
 	/**
+	 * 不知道参数类型，根据值，自动匹配。
+	 */
+	public static InvokeResult invokeMethod(Object target, String methodName, Object... paramValues)
+	{
+		try {
+			Method[] methods = target.getClass().getMethods();
+			Method found  = null;
+			for(Method method : methods)
+			{
+				if(!method.getName().equals(methodName))
+				{
+					continue;
+				}
+				Class<?>[] types = method.getParameterTypes();
+				int paramCount = types == null ? 0 : types.length;
+				//参数个数<= 1。如果是1,则参数类型不是基本类型。
+				if(paramValues == null)
+				{
+					if(paramCount > 1)
+					{
+						continue;
+					}
+					if(paramCount == 0)
+					{
+						found = method;
+						break;
+					}
+					if(!method.getParameterTypes()[0].isPrimitive())
+					{
+						found = method;
+						break;
+					}
+				}//参数个数要相同，并且类型匹配
+				else
+				{
+					if(paramCount != paramValues.length)
+					{
+						continue;
+					}
+					int i = 0;
+					boolean ok = true;
+					for(Class<?> clazz : method.getParameterTypes())
+					{
+						
+						Object value = paramValues[i];
+						if(value == null)
+						{
+							if(clazz.isPrimitive())
+							{
+								ok = false;
+								break;
+							}
+						}
+						else if(!clazz.isAssignableFrom(value.getClass()))
+						{
+							ok = false;
+							break;
+						}
+						i++;
+					}
+					if(ok)
+					{
+						found = method;
+						break;
+					}
+				}
+			} 	
+			if(found != null)
+			{
+				boolean oldAccess = found.isAccessible();
+				found.setAccessible(true);
+				Object result = found.invoke(target, paramValues);
+				found.setAccessible(oldAccess);
+				return new InvokeResult(result);
+			}
+		
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new InvokeResult(false);
+	}
+	
+	/**
 	 * 给定对象是否可以转换成<code>clazzName</code>指定的类。如果对象为空，或找到不类名所指定的类，直接返回<code>false</code>
 	 * @return
 	 */
