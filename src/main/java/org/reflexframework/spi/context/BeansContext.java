@@ -161,7 +161,9 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 
 	public void disConnect(Object view) {
 		
+		
 	}
+	
 	/**
 	 * 连接感受器。首先找到该视图相关的所有效应器，如果没有创建，则创建，并且自动注入业务中枢，然后建立关联。
 	 * @param view 视图

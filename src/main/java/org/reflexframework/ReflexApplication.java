@@ -1,5 +1,6 @@
 package org.reflexframework;
 
+import org.reflexframework.spi.AndroidReflexApplication;
 import org.reflexframework.spi.env.GUIConstants;
 
 /**

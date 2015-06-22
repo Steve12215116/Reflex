@@ -1,4 +1,4 @@
-package org.reflexframework;
+package org.reflexframework.spi;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ import org.reflexframework.spi.util.StringUtil;
  * @author jiangjiang
  *
  */
-class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
+public class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 
 	private static final String ROOT_CLASS = "android.view.ViewGroup";
 	
