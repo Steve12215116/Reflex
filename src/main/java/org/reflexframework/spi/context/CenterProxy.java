@@ -34,6 +34,16 @@ class CenterProxy implements InvocationHandler{
 	{
 		return proxy;
 	}
+	
+	/**
+	 * 添加业务中枢对效应方法的再次感知能力
+	 * @param method
+	 */
+	public void aware(Method method)
+	{
+		String key = method.getDeclaringClass().getName() + "#"+ method.getName();
+		pathCovered.remove(key);
+	}
 
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable 
 	{
@@ -91,7 +101,7 @@ class CenterProxy implements InvocationHandler{
 					EffectMethod effectMethod = beans.retrieveEffectMethod(mm);
 					if(effectMethod != null)
 					{
-						effectMethod.bindUpdate(center, bindName);
+						effectMethod.bindUpdate(this, center, bindName);
 					}
 				}
 			}

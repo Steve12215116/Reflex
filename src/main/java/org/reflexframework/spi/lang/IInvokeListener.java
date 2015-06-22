@@ -14,4 +14,5 @@ public interface IInvokeListener {
 	 * @param args  接口方法被调用参数
 	 */
 	void onInvoked(Object source, Class<?> interfaceClazz, String method, Object[] args);
+	
 }

@@ -25,4 +25,9 @@ public class CompositeSameObjectStimulationInvokeListener implements
 		methods.add(method);
 	}
 	
+	public void remove(IStimulationInvokeListener method)
+	{
+		methods.remove(method);
+	}
+	
 }

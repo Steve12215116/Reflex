@@ -6,5 +6,5 @@ public interface IReceptBinder {
 	
 	void bind(Object view, String stimulation, IStimulationInvokeListener callback);
 	
-	void unBind(Object view);
+	void unBind(Object view, String stimulation, IStimulationInvokeListener callback);
 }

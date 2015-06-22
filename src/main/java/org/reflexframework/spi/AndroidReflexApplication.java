@@ -84,7 +84,7 @@ public class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 					String method, Object[] args) {
 				onViewHierarchyChange(source, method, args);
 			}
-		});
+		}, null);
 	}
 	
 	/**
@@ -171,7 +171,6 @@ public class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 		stimulate(parent, "onChildRemoved", view);
 		//receptorContext.sendSimulation("", "onChildRemoved", parent, view);
 	}
-	
 
 	private void stimulate(Object view, String stimulation, Object ... args)
 	{
@@ -203,15 +202,32 @@ public class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 	public void bind(Object view, final String stimulation,IStimulationInvokeListener callback) {
 		String key = createKey(view, stimulation);
 		stimulationListeners.put(key, callback);
+		IInvokeListener invokeListener = new IInvokeListener() {		
+			public void onInvoked(Object source, Class<?> interfaceClazz,
+					String method, Object[] args) {
+				stimulate(source, stimulation, args);
+			}
+		};
+		apply(view, stimulation, invokeListener);
+	}
+
+	public void unBind(Object view, String stimulation,IStimulationInvokeListener callback) {
+		String key = createKey(view, stimulation);
+		stimulationListeners.remove(key);
+		apply(view, stimulation, null);
+	}
+	
+	
+	private void apply(Object view, String stimulation, IInvokeListener  invokeListener)
+	{
 		int index = stimulation.lastIndexOf('#');
-		String rawFilter = null;
+		String methodFilter = null;
 		String s1 = stimulation;
 		if(index > 0)
 		{
-			rawFilter = s1.substring(index + 1);
+			methodFilter = s1.substring(index + 1);
 			s1 = s1.substring(0, index);
 		}
-		final String methodFilter = rawFilter;
 		index = s1.lastIndexOf('$');
 		if(index < 0)
 		{
@@ -228,29 +244,20 @@ public class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 		{
 			setterName = StringUtil.firtUpper(s1);
 		}
-		IInvokeListener invokeListener = new IInvokeListener() {
-			
-			public void onInvoked(Object source, Class<?> interfaceClazz,
-					String method, Object[] args) {
-				if(methodFilter != null && !methodFilter.equals(method))
-				{
-					return;
-				}
-				stimulate(source, stimulation, args);
-			}
-		};
 		if(clazzName != null)
 		{
-			boolean result = LangUtil.observeInterfaceInvoke(view, "set" + setterName, clazzName, invokeListener);
+			List<String> methodFilters = null;
+			if(!StringUtil.isEmpty(methodFilter))
+			{
+				methodFilters = new ArrayList<String>();
+				methodFilters.add(methodFilter);
+			}
+			boolean result = LangUtil.observeInterfaceInvoke(view, "set" + setterName, clazzName, invokeListener, methodFilters);
 			if(!result)
 			{
-				result = LangUtil.observeInterfaceInvoke(view, "add" + setterName, clazzName, invokeListener);
+				result = LangUtil.observeInterfaceInvoke(view, "add" + setterName, clazzName, invokeListener, methodFilters);
 			}
 		}
-	}
-
-	public void unBind(Object view) {
-		
 	}
 	
 	public void update(Object view, String site, Object value) {
@@ -316,7 +323,7 @@ public class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 		context =LangUtil.get(context, "getApplicationContext", null);
 		String name = LangUtil.get(context, "getPackageName", null);
 		try {
-			Class clazz = view.getClass().getClassLoader().loadClass(name + ".R$id");
+			Class<?> clazz = LangUtil.findClazz(name + ".R$id");
 			Field field = clazz.getDeclaredField(idString);
 			return field.getInt(null);
 		} catch (Exception e) {

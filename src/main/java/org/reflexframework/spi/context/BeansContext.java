@@ -52,6 +52,10 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	
 	private Map<Integer, EffectMethod> methodToEffectMethods;
 	
+	/**
+	 * 连接视图时，新产生的信息存储。
+	 */
+	private Map<Object, ViewConnectInfoStore> connectInfoStore;
 	
 	public void init(List<Class<?>> clazzes) {	
 		for(Class<?> clazz : clazzes)
@@ -153,15 +157,32 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	
 	
 	public void connect(Object view, IReceptBinder receptBinder,IEffectBinder effectBinder) {
-		connectEffector(view, effectBinder);
-		connectReceptor(view, receptBinder);
+		
+		if(connectInfoStore == null)
+		{
+			connectInfoStore = new HashMap<Object, ViewConnectInfoStore>();
+		}
+		ViewConnectInfoStore infoStore = new ViewConnectInfoStore(view, receptBinder, effectBinder);
+		connectInfoStore.put(view, infoStore);
+		connectEffector(infoStore, view, effectBinder);
+		connectReceptor(infoStore, view, receptBinder);	
+		
 	}
 
 
 
 	public void disConnect(Object view) {
-		
-		
+		if(connectInfoStore == null)
+		{
+			return;
+		}
+		ViewConnectInfoStore infoStore = connectInfoStore.get(view);
+		if(infoStore == null)
+		{
+			return;
+		}
+		connectInfoStore.remove(view);
+		infoStore.unBindAndDispose();
 	}
 	
 	/**
@@ -169,7 +190,7 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	 * @param view 视图
 	 * @param binder 建立关联的接口
 	 */
-	private void connectReceptor(Object view, IReceptBinder binder)
+	private void connectReceptor(ViewConnectInfoStore infoStore, Object view, IReceptBinder binder)
 	{
 		if(targetMethodDicts == null)
 		{
@@ -187,13 +208,15 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 				List<ReceptMethod> descriptors = targetMethodDicts.get(name);
 				for(ReceptMethod descriptor : descriptors)
 				{
-					binder.bind(view, descriptor.getStimulation(), getStimulationInvokeListener(view, descriptor));
+					IStimulationInvokeListener invokeListener = getStimulationInvokeListener(view, descriptor);
+					binder.bind(view, descriptor.getStimulation(), invokeListener);				
+					infoStore.storeRecept(descriptor, invokeListener);
 				}
 			}
 		}
 	}
 	
-	private void connectEffector(Object view, IEffectBinder binder)
+	private void connectEffector(ViewConnectInfoStore infoStore, Object view, IEffectBinder binder)
 	{
 		if(effectMethods == null)
 		{
@@ -237,6 +260,7 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 				for(EffectMethod method : methods)
 				{
 					method.update(binder, view);
+					infoStore.storeEffect(method);
 				}			
 			}
 		}

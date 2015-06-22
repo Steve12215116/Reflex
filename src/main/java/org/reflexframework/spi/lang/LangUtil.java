@@ -2,6 +2,7 @@ package org.reflexframework.spi.lang;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * 提供一些语言级别的工具方法
@@ -16,11 +17,17 @@ public class LangUtil {
 	 * @param setMethod  赋予接口的方法
 	 * @param interfaceClazz 接口类型
 	 * @param listener  接口被调用是的监听器
+	 * @param methodsFilters  过滤掉指定方法名，不向外抛出调用信息。
 	 */
-	public static boolean observeInterfaceInvoke(Object target, String setMethod, String interfaceClazz, IInvokeListener listener)
+	public static boolean observeInterfaceInvoke(Object target, String setMethod, String interfaceClazz, IInvokeListener listener, List<String> methodsFilters)
 	{
 		InterfaceInvokeObserver observer = new InterfaceInvokeObserver(target, setMethod, interfaceClazz, listener);
-		return observer.observe();
+		if(listener == null)
+		{
+			observer.unObserver();
+			return true;
+		}
+		return observer.observe(methodsFilters);
 	}
 	
 	/**
