@@ -10,15 +10,16 @@ Reflex 目前已经完成的：
 <li>利用@Autowired 注释，自动注入业务中枢对象。</li>
 <li>用统一的Annotation 监控视图、更新视图数据，做到和视图隔离。</li>
  在android下监控视图的简单例子：
-> /**
->  * 感受对象是  id为bt的视图，行为刺激是： click 事件.
-> * @param view
->   */
->   @Recept(target="bt", stimulation="android.view.View$OnClickListener")
+<blockquote> /**
+  * 感受对象是  id为bt的视图，行为刺激是： click 事件.
+ * @param view
+   */
+   @Recept(target="bt", stimulation="android.view.View$OnClickListener")
     private void onBtClicked(View view)
     {
     helloCenter.changeCount();
     }
+</blockquote>
     更新视图数据的例子：
     /**
      * 效应对象是  id为text的视图，效应方位是 text属性.
