@@ -29,7 +29,7 @@ Reflex 目前已经完成的：
     @Effect(target="text", site="text")
     public String getHelloText()
     {
-         return "hello world " + helloCenter.getCount();
+        return "hello world " + helloCenter.getCount();
     }
 ```
 <li>业务对象数据发生变化，效应器自动更新数据到视图。</li>
