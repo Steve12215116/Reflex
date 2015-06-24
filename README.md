@@ -21,7 +21,7 @@ Reflex 目前已经完成的：
 	}
 
     更新视图数据的例子：
-```java
+```Java
     /**
      * 效应对象是  id为text的视图，效应方位是 text属性.
     * @param view
