@@ -9,7 +9,7 @@ Reflex 目前已经完成的：
 <li>关键对象（感受器、效应器、业务中枢）是受框架Managed的，不需要手动创建。。</li>
 <li>利用@Autowired 注释，自动注入业务中枢对象。</li>
 <li>用统一的Annotation 监控视图、更新视图数据，做到和视图隔离。</li>
-###在android下监控视图的简单例子：
+### 在android下监控视图的简单例子：
    /**
     * 感受对象是  id为bt的视图，行为刺激是： click 事件.
    * @param view
