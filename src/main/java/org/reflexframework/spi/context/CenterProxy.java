@@ -94,7 +94,7 @@ class CenterProxy implements InvocationHandler{
 			String methodName = element.getMethodName();
 			try
 			{
-				Method mm = effectorClazz.getMethod(methodName);
+				Method mm =  effectorClazz.getDeclaredMethod(methodName);
 				if(mm.isAnnotationPresent(org.reflexframework.effector.annotation.Effect.class))
 				{
 					//TODO

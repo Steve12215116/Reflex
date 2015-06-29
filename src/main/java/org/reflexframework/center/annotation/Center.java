@@ -17,5 +17,5 @@ public @interface Center {
 	 * 设置中枢名称，如果没有设置，则默认采用类名，首字母变为小写。
 	 * @return
 	 */
-	String name() default "";
+	String value() default "";
 }

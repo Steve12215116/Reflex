@@ -76,7 +76,11 @@ public class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 	
 	protected boolean observeViewChange(Object parent)
 	{
-		beansContext.connect(parent, this, this);
+		beansContext.connect(parent, this, this);		
+		if(!isContainer(parent))
+		{
+			return false;
+		}
 		observeChildren(parent);
 		return LangUtil.observeInterfaceInvoke(parent, VIEW_CHANGE_INTERFACE_SET_METHOD, VIEW_CHANGE_INTERFACE, new IInvokeListener() {
 			
@@ -194,10 +198,50 @@ public class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 		{
 			return true;
 		}
-		int id = LangUtil.get(view, "getId", null, null);
-		int idByName = getViewId(view, name);
-		return id == idByName;
+		String[] names = name.split(".");
+		if(names.length <= 1)
+		{
+			int id = LangUtil.get(view, "getId", null);
+			int idByName = getViewId(view, name);
+			return id == idByName;
+		}
+		Object parent = null;
+		int count = names.length;
+		Object[] ancestors = new Object[count];
+		while(--count >= 0)
+		{
+			if(parent == null)
+			{
+				parent = view;
+			}
+			else
+			{
+				parent = LangUtil.get(parent, "getParent", null);
+			}				
+			if(parent == null)
+			{
+				break;
+			}
+			ancestors[count] = parent;
+		}
+		if(count > 0)
+		{
+			return false;
+		}
+		int i = 0;
+		for(String itemName : names)
+		{
+			parent = ancestors[i];
+			i++;
+			int id = LangUtil.get(parent, "getId", null);
+			if(!itemName.equals("*") && id != getViewId(view, itemName))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
+
 
 	public void bind(Object view, final String stimulation,IStimulationInvokeListener callback) {
 		String key = createKey(view, stimulation);

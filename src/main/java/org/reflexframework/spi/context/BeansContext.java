@@ -16,6 +16,8 @@ import org.reflexframework.receptor.annotation.Recept;
 import org.reflexframework.receptor.annotation.Receptor;
 import org.reflexframework.spi.lang.LangUtil;
 import org.reflexframework.spi.util.StringUtil;
+import org.reflexframework.transaction.TransactionManager;
+import org.reflexframework.transaction.TransactionManagerFactory;
 
 
 public class BeansContext implements IBeansContext, IBeansCreationAware {
@@ -86,9 +88,9 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	{
 		Center center  = centerClazz.getAnnotation(Center.class);
 		String name = null;
-		if(!StringUtil.isEmpty(center.name()))
+		if(!StringUtil.isEmpty(center.value()))
 		{
-			name = center.name();
+			name = center.value();
 		}
 		else
 		{	
@@ -111,7 +113,7 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	{
 		for(Object center : centers.values())
 		{
-			autoWireObjectIntoCenters(center);
+			autoWireObject(center);
 		}
 	}	
 	
@@ -119,7 +121,7 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 	 * 给指定对象注入业务中枢。注入的都是代理
 	 * @param instance
 	 */
-	private void autoWireObjectIntoCenters(Object instance)
+	private void autoWireObject(Object instance)
 	{
 		Class<?> clazz = instance.getClass();
 		Field[] fields = clazz.getDeclaredFields();
@@ -127,6 +129,11 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 		{
 			if(!field.isAnnotationPresent(Autowired.class))
 			{
+				continue;
+			}
+			if((TransactionManager.class).isAssignableFrom(field.getType()))
+			{
+				LangUtil.setField(instance, field, TransactionManagerFactory.getTransactionManager());
 				continue;
 			}
 			String name = field.getName();
@@ -281,7 +288,7 @@ public class BeansContext implements IBeansContext, IBeansCreationAware {
 				e.printStackTrace();
 				return null;
 			}
-			autoWireObjectIntoCenters(value);
+			autoWireObject(value);
 			beans.put(clazz, value);
 		}
 		return beans.get(clazz);
