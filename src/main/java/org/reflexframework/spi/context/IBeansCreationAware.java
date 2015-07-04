@@ -7,7 +7,7 @@ import java.lang.reflect.Method;
  * @author jiangjiang
  *
  */
-interface IBeansCreationAware {
+public interface IBeansCreationAware {
 	
 	/**
 	 * 根据类查找对应的bean,如果没有，则创建。

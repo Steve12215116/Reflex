@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.reflexframework.spi.context.BeansContext;
+import org.reflexframework.spi.context.BeansContextFactory;
 import org.reflexframework.spi.context.IBeansContext;
 import org.reflexframework.spi.context.IEffectBinder;
 import org.reflexframework.spi.context.IReceptBinder;
@@ -47,7 +48,7 @@ public class AndroidReflexApplication implements IReceptBinder, IEffectBinder{
 	
 	public AndroidReflexApplication()
 	{
-		beansContext = new BeansContext();
+		beansContext = BeansContextFactory.getBeansContext();
 	}
 	
 	public boolean run(Object root)

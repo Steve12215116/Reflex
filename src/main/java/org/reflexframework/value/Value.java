@@ -1,5 +1,15 @@
 package org.reflexframework.value;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.reflexframework.effector.annotation.Effector;
+import org.reflexframework.spi.context.BeansContextFactory;
+import org.reflexframework.spi.context.EffectMethod;
+import org.reflexframework.spi.context.IBeansCreationAware;
+import org.reflexframework.spi.lang.LangUtil;
+
 
 /**
  * 使用该类来设置数据,有两个特性：
@@ -14,6 +24,11 @@ package org.reflexframework.value;
 public class Value<T> extends TransactionalDataBase
 {
 	private T value;
+	
+	
+	private List<EffectMethod> effectMethods;
+	
+	private IBeansCreationAware beans;
 	
 	public Value()
 	{
@@ -34,6 +49,13 @@ public class Value<T> extends TransactionalDataBase
 		T old = this.value;
 		this.value = value;
 		afterChange(changed, old, value);
+		if(changed && effectMethods != null)
+		{
+			for(EffectMethod method : effectMethods)
+			{
+				method.update();
+			}
+		}
 	}
 	
 	/**
@@ -42,6 +64,21 @@ public class Value<T> extends TransactionalDataBase
 	 */
 	public T get()
 	{
+		List<EffectMethod> methods = findCaller();
+		if(methods != null && !methods.isEmpty())
+		{
+			if(effectMethods == null)
+			{
+				effectMethods = new ArrayList<EffectMethod>();
+			}
+			for(EffectMethod method : methods)
+			{
+				if(!effectMethods.contains(method))
+				{
+					effectMethods.add(method);
+				}
+			}
+		}
 		return value;
 	}
 
@@ -89,5 +126,64 @@ public class Value<T> extends TransactionalDataBase
 			changed = false;
 		}
 		return changed;
+	}
+	
+	
+	protected List<EffectMethod> findCaller()
+	{
+		if(beans == null)
+		{
+			beans =(IBeansCreationAware)BeansContextFactory.getBeansContext();
+		}
+		StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+		int length = elements.length;
+		Class<?> effectorClazz = null;
+		List<EffectMethod> methods = null;
+		for(int i = 0; i < length; i++)
+		{
+			StackTraceElement element= elements[i];
+			Class<?> clazz = LangUtil.findClazz(element.getClassName());
+			if(clazz == null)
+			{
+				continue;
+			}
+			if(effectorClazz == null)
+			{
+				if(!clazz.isAnnotationPresent(Effector.class))
+				{
+					continue;
+				}
+				effectorClazz = clazz;
+			}
+			//保持一直在effector内
+			else if(!effectorClazz.equals(clazz))
+			{
+				break;
+			}
+			//一个业务方法可能对应多个效应的改变。
+			//找到effect method,然后监控该方法的改变
+			String methodName = element.getMethodName();
+			try
+			{
+				Method mm =  effectorClazz.getDeclaredMethod(methodName);
+				if(mm.isAnnotationPresent(org.reflexframework.effector.annotation.Effect.class))
+				{
+					if(methods == null)
+					{
+						methods = new ArrayList<EffectMethod>();
+					}
+					EffectMethod effectMethod = beans.retrieveEffectMethod(mm);
+					if(!methods.contains(effectMethod))
+					{
+						methods.add(effectMethod);
+					}
+				}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}	
+		}
+		return methods;
 	}
 }

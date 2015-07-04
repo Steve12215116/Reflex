@@ -1,6 +1,13 @@
 package org.reflexframework.value;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.reflexframework.effector.annotation.Effector;
+import org.reflexframework.spi.context.EffectMethod;
 import org.reflexframework.spi.event.EventTarget;
+import org.reflexframework.spi.lang.LangUtil;
 import org.reflexframework.transaction.Status;
 import org.reflexframework.transaction.Synchronization;
 import org.reflexframework.transaction.TransactionManager;
@@ -37,6 +44,7 @@ abstract class TransactionalDataBase extends EventTarget{
 	 * @return
 	 */
 	protected abstract Object beginTransaction();
+	
 	
 	
 	class TransactionSyncListener implements Synchronization {
